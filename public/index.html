@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <title>CORE | Steam Stats</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1><span class="orange">CORE</span> <span class="yellow">ANALYTICS</span></h1>
+        
+        <div class="search">
+            <input type="text" id="steamInput" placeholder="Vlož SteamID64">
+            <button onclick="loadStats()">ANALYZOVAŤ</button>
+        </div>
+
+        <div id="results" class="results-grid">
+            <div class="card">
+                <h3>VÝHRY</h3>
+                <p id="wins">-</p>
+            </div>
+            <div class="card">
+                <h3>HEADSHOTY</h3>
+                <p id="hs" class="orange">-</p>
+            </div>
+            <div class="card">
+                <h3>KILLS</h3>
+                <p id="kills" class="yellow">-</p>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
