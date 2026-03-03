@@ -2,33 +2,49 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <title>CORE | Steam Stats</title>
-    <link rel="stylesheet" href="style.css">
+    <title>CS2 Basic Stats</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; padding: 50px; }
+        input { padding: 10px; width: 250px; border-radius: 5px; border: none; }
+        button { padding: 10px 20px; cursor: pointer; background: orange; border: none; font-weight: bold; }
+        .result-box { margin-top: 30px; display: inline-block; text-align: left; background: #2a2a2a; padding: 20px; border-radius: 10px; }
+        span { color: orange; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1><span class="orange">CORE</span> <span class="yellow">ANALYTICS</span></h1>
-        
-        <div class="search">
-            <input type="text" id="steamInput" placeholder="Vlož SteamID64">
-            <button onclick="loadStats()">ANALYZOVAŤ</button>
-        </div>
 
-        <div id="results" class="results-grid">
-            <div class="card">
-                <h3>VÝHRY</h3>
-                <p id="wins">-</p>
-            </div>
-            <div class="card">
-                <h3>HEADSHOTY</h3>
-                <p id="hs" class="orange">-</p>
-            </div>
-            <div class="card">
-                <h3>KILLS</h3>
-                <p id="kills" class="yellow">-</p>
-            </div>
-        </div>
+    <h1>CS2 Štatistiky</h1>
+    <input type="text" id="steamInput" placeholder="Vlož SteamID (7656...)">
+    <button onclick="loadStats()">Analyzovať</button>
+
+    <div id="result" class="result-box" style="display:none;">
+        <p>Odohraný čas: <span id="txt_time">0</span></p>
+        <p>Celkové killy: <span id="txt_kills">0</span></p>
+        <p>Výhry: <span id="txt_wins">0</span></p>
+        <p>Headshoty: <span id="txt_hs">0</span></p>
     </div>
-    <script src="script.js"></script>
+
+    <script>
+        async function loadStats() {
+            const id = document.getElementById('steamInput').value;
+            if(!id) return alert("Zadaj ID!");
+
+            try {
+                const res = await fetch(`/api/stats/${id}`);
+                const data = await res.json();
+
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('txt_time').innerText = data.hours + " hodín";
+
+                const find = (name) => data.stats.find(s => s.name === name)?.value || 0;
+
+                document.getElementById('txt_kills').innerText = find('total_kills');
+                document.getElementById('txt_wins').innerText = find('total_wins');
+                document.getElementById('txt_hs').innerText = find('total_kills_headshot');
+            } catch (e) {
+                alert("Nepodarilo sa načítať dáta.");
+            }
+        }
+    </script>
 </body>
 </html>
