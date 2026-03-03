@@ -2,70 +2,62 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <title>CORE CS2 STATS</title>
+    <title>CS2 Stats Tracker</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; text-align: center; padding: 50px; }
-        .box { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 2px solid orange; display: inline-block; min-width: 300px; }
-        h1 { color: orange; letter-spacing: 2px; }
-        .stat { font-size: 1.3rem; margin: 15px 0; border-bottom: 1px solid #333; padding-bottom: 10px; display: flex; justify-content: space-between; }
-        span { color: orange; font-weight: bold; margin-left: 20px; }
-        #loading { color: #888; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; text-align: center; padding: 30px; }
+        .box { background: #1e1e1e; padding: 25px; border-radius: 15px; border: 2px solid orange; display: inline-block; width: 350px; }
+        input { padding: 10px; width: 70%; border-radius: 5px; border: 1px solid #444; background: #222; color: white; margin-bottom: 10px; }
+        button { padding: 10px; background: orange; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .stat-grid { margin-top: 20px; text-align: left; }
+        .stat-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; }
+        .val { color: orange; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="box">
-        <h1>MOJE ŠTATISTIKY</h1>
-        <div id="loading">Načítavam dáta...</div>
-        
-        <div id="stats-content" style="display:none;">
-            <div class="stat">Odohraný čas: <span id="time">0</span></div>
-            <div class="stat">Zabitia (Kills): <span id="kills">0</span></div>
-            <div class="stat">Vyhrané zápasy: <span id="wins">0</span></div>
-            <div class="stat">Headshoty: <span id="hs">0</span></div>
-            <div class="stat">K/D Ratio: <span id="kd">0</span></div>
+        <h1>CS2 TRACKER</h1>
+        <input type="text" id="steamInput" placeholder="Vlož SteamID..." value="76561198740226614">
+        <button onclick="loadStats()">Hľadaj</button>
+
+        <div id="stats-content" style="margin-top:20px;">
+            <div class="stat-grid">
+                <div class="stat-item">Čas v knižnici: <span class="val" id="time">0 h</span></div>
+                <div class="stat-item">Killy (Všetky): <span class="val" id="kills">0</span></div>
+                <div class="stat-item">Vyhrané zápasy: <span class="val" id="wins">0</span></div>
+                <div class="stat-item">MVP Tituly: <span class="val" id="mvp">0</span></div>
+                <div class="stat-item">Bomby plantnuté: <span class="val" id="bombs">0</span></div>
+            </div>
         </div>
     </div>
 
     <script>
-        const MY_ID = "76561198740226614"; 
+        async function loadStats() {
+            const id = document.getElementById('steamInput').value;
+            if (!id) return;
 
-        async function load() {
             try {
-                const res = await fetch(`/api/stats/${MY_ID}`);
+                const res = await fetch(`/api/stats/${id}`);
                 const data = await res.json();
 
-                // 1. Čas už funguje, tak ho len priradíme
-                document.getElementById('time').innerText = data.hours + " hodín";
+                // Čas z knižnice (32h)
+                document.getElementById('time').innerText = (data.hours || 0) + " h";
 
-                // 2. Oprava kľúčov pre štatistiky
-                // Steam API používa presne tieto názvy:
                 const find = (name) => data.stats.find(s => s.name === name)?.value || 0;
 
-                const kills = find('total_kills');
-                const deaths = find('total_deaths');
-                const wins = find('total_wins');
-                const hs = find('total_kills_headshot');
-
-                // Výpočet KD Ratio (killy deleno úmrtia)
-                const kd = deaths > 0 ? (kills / deaths).toFixed(2) : kills;
-
-                // 3. Vloženie do stránky
-                document.getElementById('kills').innerText = kills.toLocaleString();
-                document.getElementById('wins').innerText = wins.toLocaleString();
-                document.getElementById('hs').innerText = hs.toLocaleString();
-                document.getElementById('kd').innerText = kd;
-
-                // Zobrazenie obsahu
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('stats-content').style.display = 'block';
+                // Tu vyťahujeme dáta - niektoré sú "čistejšie" ako killy
+                document.getElementById('kills').innerText = find('total_kills').toLocaleString();
+                document.getElementById('wins').innerText = find('total_wins').toLocaleString();
+                document.getElementById('mvp').innerText = find('total_mvps').toLocaleString();
+                document.getElementById('bombs').innerText = find('total_planted_bombs').toLocaleString();
 
             } catch (e) {
-                document.getElementById('loading').innerText = "Chyba pri načítaní dát.";
-                console.error(e);
+                alert("Chyba: Skontroluj ID alebo súkromie profilu.");
             }
         }
-        window.onload = load;
+
+        // Automaticky načíta tvoje ID pri štarte
+        window.onload = loadStats;
     </script>
 </body>
 </html>
