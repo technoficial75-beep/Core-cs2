@@ -2,49 +2,61 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <title>CS2 Basic Stats</title>
+    <title>Moje CS2 Štatistiky</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; padding: 50px; }
-        input { padding: 10px; width: 250px; border-radius: 5px; border: none; }
-        button { padding: 10px 20px; cursor: pointer; background: orange; border: none; font-weight: bold; }
-        .result-box { margin-top: 30px; display: inline-block; text-align: left; background: #2a2a2a; padding: 20px; border-radius: 10px; }
-        span { color: orange; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; text-align: center; padding-top: 50px; }
+        .container { background: #1e1e1e; display: inline-block; padding: 30px; border-radius: 15px; border: 1px solid orange; box-shadow: 0 0 20px rgba(255,165,0,0.2); }
+        h1 { color: orange; margin-bottom: 20px; }
+        .stat { font-size: 1.2rem; margin: 10px 0; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        span { color: orange; font-weight: bold; float: right; margin-left: 20px; }
+        #loading { color: gray; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <h1>CS2 Štatistiky</h1>
-    <input type="text" id="steamInput" placeholder="Vlož SteamID (7656...)">
-    <button onclick="loadStats()">Analyzovať</button>
-
-    <div id="result" class="result-box" style="display:none;">
-        <p>Odohraný čas: <span id="txt_time">0</span></p>
-        <p>Celkové killy: <span id="txt_kills">0</span></p>
-        <p>Výhry: <span id="txt_wins">0</span></p>
-        <p>Headshoty: <span id="txt_hs">0</span></p>
+    <div class="container">
+        <h1>CORE CS2 STATS</h1>
+        <div id="loading">Načítavam dáta zo Steamu...</div>
+        
+        <div id="stats-content" style="display:none;">
+            <div class="stat">Odohraný čas: <span id="txt_time">0</span></div>
+            <div class="stat">Celkové killy: <span id="txt_kills">0</span></div>
+            <div class="stat">Výhry: <span id="txt_wins">0</span></div>
+            <div class="stat">Headshoty: <span id="txt_hs">0</span></div>
+        </div>
     </div>
 
     <script>
-        async function loadStats() {
-            const id = document.getElementById('steamInput').value;
-            if(!id) return alert("Zadaj ID!");
+        // TU VLOŽ SVOJE ID NA TRVALO
+        const MY_STEAM_ID = "76561198740226614"; 
 
+        async function loadMyStats() {
             try {
-                const res = await fetch(`/api/stats/${id}`);
+                const res = await fetch(`/api/stats/${MY_STEAM_ID}`);
                 const data = await res.json();
 
-                document.getElementById('result').style.display = 'block';
+                if (data.error) throw new Error("Chyba");
+
+                // Skryjeme nápis načítavania a ukážeme štatistiky
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('stats-content').style.display = 'block';
+
+                // Vložíme dáta
                 document.getElementById('txt_time').innerText = data.hours + " hodín";
 
                 const find = (name) => data.stats.find(s => s.name === name)?.value || 0;
 
-                document.getElementById('txt_kills').innerText = find('total_kills');
-                document.getElementById('txt_wins').innerText = find('total_wins');
-                document.getElementById('txt_hs').innerText = find('total_kills_headshot');
+                document.getElementById('txt_kills').innerText = find('total_kills').toLocaleString();
+                document.getElementById('txt_wins').innerText = find('total_wins').toLocaleString();
+                document.getElementById('txt_hs').innerText = find('total_kills_headshot').toLocaleString();
+                
             } catch (e) {
-                alert("Nepodarilo sa načítať dáta.");
+                document.getElementById('loading').innerText = "Chyba: Profil je súkromný alebo server nebeží.";
             }
         }
+
+        // Spustí sa automaticky po načítaní stránky
+        window.onload = loadMyStats;
     </script>
 </body>
 </html>
