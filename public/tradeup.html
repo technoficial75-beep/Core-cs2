@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <title>CS2 Trade Up Calculator</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }
+        .slot { background: #1e1e1e; padding: 15px; border-radius: 10px; border: 1px solid #333; }
+        input, select { width: 90%; padding: 8px; margin-top: 5px; background: #2a2a2a; color: white; border: 1px solid #444; }
+        .result-box { margin-top: 40px; background: #252525; padding: 20px; border: 2px solid orange; border-radius: 15px; display: inline-block; }
+        h1 { color: orange; }
+    </style>
+</head>
+<body>
+
+    <h1>CS2 Trade Up Calculator</h1>
+    <p>Vyber 10 skinov a zadaj ich floaty</p>
+
+    <div class="grid" id="slots-container">
+        </div>
+
+    <div class="result-box">
+        <h3>Nastavenie cieľa:</h3>
+        Min Float cieľa: <input type="number" id="target-min" value="0.00" step="0.01">
+        Max Float cieľa: <input type="number" id="target-max" value="1.00" step="0.01">
+        <br><br>
+        <button onclick="calculate()" style="padding: 15px 30px; background: orange; border: none; font-weight: bold; cursor: pointer;">VYPOČÍTAJ VÝSLEDOK</button>
+        <h2 id="final-float">Výsledný Float: -</h2>
+    </div>
+
+    <datalist id="skinList"></datalist>
+
+    <script>
+        let allSkins = [];
+
+        async function init() {
+            // 1. Načítame skiny z nášho servera
+            const res = await fetch('/api/cs-skins');
+            allSkins = await res.json();
+
+            // 2. Naplníme "našepkávač" (datalist)
+            const list = document.getElementById('skinList');
+            allSkins.forEach(skin => {
+                let opt = document.createElement('option');
+                opt.value = skin.name;
+                list.appendChild(opt);
+            });
+
+            // 3. Vytvoríme 10 políčok
+            const container = document.getElementById('slots-container');
+            for(let i=0; i<10; i++) {
+                container.innerHTML += `
+                    <div class="slot">
+                        <strong>Skin #${i+1}</strong>
+                        <input type="text" list="skinList" placeholder="Názov skinu..." onchange="autoFill(${i}, this.value)">
+                        <input type="number" class="f-input" step="0.000000001" placeholder="Vlož float">
+                    </div>
+                `;
+            }
+        }
+
+        function calculate() {
+            const inputs = document.querySelectorAll('.f-input');
+            let sum = 0;
+            inputs.forEach(input => sum += parseFloat(input.value || 0));
+
+            const avg = sum / 10;
+            const tMin = parseFloat(document.getElementById('target-min').value);
+            const tMax = parseFloat(document.getElementById('target-max').value);
+
+            // Klasický Trade Up vzorec
+            const result = (avg * (tMax - tMin)) + tMin;
+            document.getElementById('final-float').innerText = "Výsledný Float: " + result.toFixed(10);
+        }
+
+        // Pomôcka: Automaticky nastaví min/max float cieľa podľa prvého skinu (len ako príklad)
+        function autoFill(index, name) {
+            const skin = allSkins.find(s => s.name === name);
+            if(skin && index === 0) {
+                // Ak vyberieš prvý skin, skúsime odhadnúť cieľové limity
+                // V reálnom Trade-upe by si musel vybrať konkrétny cieľový skin
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
