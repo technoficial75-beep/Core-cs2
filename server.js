@@ -1,28 +1,45 @@
-const express = require('express');
-const axios = require('axios');
-const cors = require('cors');
-require('dotenv').config();
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(cors());
-app.use(express.static('public'));
-
-// Endpoint pre CS2 / CS:GO štatistiky
-app.get('/api/stats/:steamid', async (req, res) => {
-    const { steamid } = req.params;
-    const API_KEY = process.env.STEAM_API_KEY;
+async function getStats() {
+    const steamId = document.getElementById('steamIdInput').value;
+    const resultDiv = document.getElementById('result'); // Tvoj div na zobrazenie výsledkov
 
     try {
-        const url = `http://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v0002/?appid=730&key=${API_KEY}&steamid=${steamid}`;
-        const response = await axios.get(url);
-        res.json(response.data);
-    } catch (error) {
-        res.status(500).json({ error: "Nepodarilo sa načítať dáta. Skontroluj SteamID alebo či je profil verejný." });
-    }
-});
+        const response = await fetch(`/api/stats/${steamId}`);
+        const data = await response.json();
 
-app.listen(PORT, () => {
-    console.log(`Server beží na porte ${PORT}`);
-});
+        if (data.playerstats && data.playerstats.stats) {
+            const stats = data.playerstats.stats;
+
+            // Pomocná funkcia na nájdenie konkrétnej štatistiky podľa mena
+            const findStat = (name) => {
+                const stat = stats.find(s => s.name === name);
+                return stat ? stat.value : 0;
+            };
+
+            // Vytiahneme konkrétne dáta
+            const kills = findStat('total_kills');
+            const deaths = findStat('total_deaths');
+            const hs = findStat('total_sum_headshots');
+            const wins = findStat('total_wins');
+            const matches = findStat('total_matches_played');
+
+            // Výpočet KD Ratio
+            const kd = (kills / (deaths || 1)).toFixed(2);
+
+            // Vložíme to do HTML
+            resultDiv.innerHTML = `
+                <div class="stat-box">
+                    <p>Zabitia: <span>${kills}</span></p>
+                    <p>Úmrtia: <span>${deaths}</span></p>
+                    <p>K/D Ratio: <span>${kd}</span></p>
+                    <p>Headshoty: <span>${hs}</span></p>
+                    <p>Vyhrané zápasy: <span>${wins}</span></p>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = "<p>Dáta sa nenašli. Máš profil nastavený na Public?</p>";
+        }
+    } catch (error) {
+        console.error("Chyba:", error);
+        resultDiv.innerHTML = "<p>Server neodpovedá.</p>";
+    }
+}
